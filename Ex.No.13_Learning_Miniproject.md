@@ -1,77 +1,110 @@
-# Ex.No: 13 Learning - Use Supervised Learning
-### DATE: 18.10.2023                                                                            
-### REGISTER NUMBER: 212222040178
+# Ex.No: 13 Learning – Use Supervised Learning  
+### DATE: 18.10.23                                                                            
+### REGISTER NUMBER : 212222040178
 ### AIM: 
-To write the program to train the classifier for Simple delivery Robot Planner.
-###  Algorithm:
-Step 1: Determine the robot's current location in the warehouse. <br>
-Step 2: Identify the goal location where the package needs to be delivered. <br>
-Step 3: Create a map of the warehouse layout, marking obstacles and paths. <br>
-Step 4: Use the A* search algorithm to find the optimal path from the robot's current location to the goal while avoiding obstacles. <br>
-Step 5: Break the path into individual movement steps. <br>
-Step 6: Check for the next step in the path and move the robot accordingly. <br>
-Step 7: Continuously update the robot's location. <br>
-Step 8: If the robot encounters an obstacle, reevaluate the path to find an alternative route. <br>
-Step 9: Repeat steps 6-8 until the robot reaches the goal location. <br>
-Step 10: Once the robot reaches the goal, complete the package delivery. <br>
+To write a program to train the classifier for Diabetes Prediction.
+### Algorithm:
+1.Start the program.
+
+2.Import required Python libraries, including NumPy, Pandas, Google Colab, Gradio, and various scikit-learn modules.
+
+3.Mount Google Drive using Google Colab's 'drive.mount()' method to access the data file located in Google Drive.
+
+4.Install the Gradio library using 'pip install gradio'.
+
+5.Load the diabetes dataset from a CSV file ('diabetes.csv') using Pandas.
+
+6.Separate the target variable ('Outcome') from the input features and Scale the input features using the StandardScaler from scikit-learn.
+
+7.Create a multi-layer perceptron (MLP) classifier model using scikit-learn's 'MLPClassifier'.
+
+8.Train the model using the training data (x_train and y_train).
+
+9.Define a function named 'diabetes' that takes input parameters for various features and Use the trained machine learning model to predict the outcome based on the input features.
+
+10.Create a Gradio interface using 'gr.Interface' and Specify the function to be used to make predictions based on user inputs.
+
+11.Launch the Gradio web application, enabling sharing, to allow users to input their data and get predictions regarding diabetes risk.
+
+12.Stop the program.
+
 ### Program:
 ```
-(define (domain delivery_domain)
-  (:requirements :strips)
-  (:predicates
-    (at ?robot ?location)
-    (has-package ?robot ?package)
-    (at-goal ?package ?location)
-    (clear ?location)
-    (free ?robot)
-    (package-at ?package ?location)
-  )
-  
-  (:action move
-    :parameters (?robot ?from ?to)
-    :precondition (and (at ?robot ?from) (clear ?to) (free ?robot))
-    :effect (and (at ?robot ?to) (clear ?from))
-  )
+#import packages
+import numpy as np
+import pandas as pd
 
-  (:action pick-up
-    :parameters (?robot ?package ?location)
-    :precondition (and (at ?robot ?location) (package-at ?package ?location) (free ?robot))
-    :effect (and (has-package ?robot ?package) (at ?robot ?location) (not (package-at ?package ?location)))
-  )
+from google.colab import drive
+drive.mount('/content/gdrive')
 
-  (:action drop-off
-    :parameters (?robot ?package ?location)
-    :precondition (and (at ?robot ?location) (has-package ?robot ?package) (at-goal ?package ?location) (free ?robot))
-    :effect (and (package-at ?package ?location) (clear ?location) (free ?robot) (not (has-package ?robot ?package)))
-  )
-)
+pip install gradio
 
+pip install typing-extensions --upgrade
+
+import gradio as gr
+
+cd /content/gdrive/MyDrive/demo/gradio_project-main
+
+#get the data
+data = pd.read_csv('diabetes.csv')
+data.head()
+
+print(data.columns)
+
+x = data.drop(['Outcome'], axis=1)
+y = data['Outcome']
+print(x[:5])
+
+from multi_imbalance.utils.plot import plot_cardinality_and_2d_data
+plot_cardinality_and_2d_data(x, y, 'PIMA Diabetes Prediction Data set')
+
+#split data
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test= train_test_split(x,y)
+
+#scale data
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+x_train_scaled = scaler.fit_transform(x_train)
+x_test_scaled = scaler.fit_transform(x_test)
+
+#instatiate model
+from sklearn.neural_network import MLPClassifier
+model = MLPClassifier(max_iter=1000, alpha=1)
+model.fit(x_train, y_train)
+print("Model Accuracy on training set:", model.score(x_train, y_train))
+print("Model Accuracy on Test Set:", model.score(x_test, y_test))
+
+print(data.columns)
+
+#create a function for gradio
+def diabetes(Pregnancies, Glucose, Blood_Pressure, SkinThickness, Insulin, BMI,Diabetes_Pedigree, Age):
+    x = np.array([Pregnancies,Glucose,Blood_Pressure,SkinThickness,Insulin,BMI,Diabetes_Pedigree,Age])
+    prediction = model.predict(x.reshape(1, -1))
+    if(prediction==0):
+      return "NO"
+    else:
+      return "YES"
+
+#create a function for gradio
+def diabetes(Pregnancies, Glucose, Blood_Pressure, SkinThickness, Insulin, BMI,Diabetes_Pedigree, Age):
+    x = np.array([Pregnancies,Glucose,Blood_Pressure,SkinThickness,Insulin,BMI,Diabetes_Pedigree,Age])
+    prediction = model.predict(x.reshape(1, -1))
+    return prediction
+
+outputs = gr.outputs.Textbox()
+app = gr.Interface(fn=diabetes, inputs=['number','number','number','number','number','number','number','number'], outputs=outputs,description="Detection of Diabeties")
+app.launch(share=True)
 ```
-### Input 
-```
-(define (problem delivery_problem)
-  (:domain delivery_domain)
-  (:objects
-    robot1
-    package1
-    locationA
-    locationB
-  )
-  (:init
-    (at robot1 locationA)
-    (package-at package1 locationA)
-    (at-goal package1 locationB)
-    (clear locationB)
-    (clear locationA)
-    (free robot1)
-  )
-  (:goal (and (package-at package1 locationB) (clear locationB)))
-)
 
-```
-### Output/Plan:
+### Output:
 
-![image](https://github.com/HariHaranLK/AI_Lab_2023-24/assets/132996089/68eda73c-9e8d-4c9f-be6e-25d8be253dab)
+![image](https://github.com/Mena-Rossini/AI_Lab_2023-24/assets/102855266/cf2bf2cf-213e-46da-8c3c-e2b1b4b82eb6)
+
+![image](https://github.com/Mena-Rossini/AI_Lab_2023-24/assets/102855266/89af30fd-ecbc-4798-8324-723cd7304139)
+
+![image](https://github.com/Mena-Rossini/AI_Lab_2023-24/assets/102855266/fd6636fe-9fd1-4ee8-901b-ca38c271f1f4)
+
 
 ### Result:
 Thus the system was trained successfully and the prediction was carried out.
